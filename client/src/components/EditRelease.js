@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { DateTime } from 'luxon'
 import axios from 'axios'
+import moment from 'moment'
 
-import { Modal, Form, Input, Select, DatePicker, Switch, Button, message, Spin } from 'antd'
+import { Modal, Form, Input, Select, DatePicker, Switch, Button, message, Spin, Divider } from 'antd'
 
-const NewRelease = (props) => {
+const EditRelease = (props) => {
 
     const [form] = Form.useForm();
 
@@ -13,42 +15,96 @@ const NewRelease = (props) => {
     const [firstLoading, setFirstLoading] = useState(false)
     const [loading, setloading] = useState(false)
 
+    const [employees, setEmployees] = useState(null)
+    const [managers, setManagers] = useState(null)
+
     useEffect(() => {
+
+
         const load = async (id) => {
             setFirstLoading(true)
+
             if (id) {
                 const res = await axios.get(`http://localhost:8080/releases/${id}`)
                 const data = res.data
                 data.leaving = data.leaving === 'y'
-                // form.setFields({ leaving: { checked: data.leaving } })
-                delete data.release_date
-                delete data.leaving
+                data.release_date = moment(data.release_date, 'YYYY-MM-DD')
+                data.action_taken = { other: '' }
                 form.setFieldsValue(data)
             }
 
-            setFirstLoading(false)
 
         }
 
+        const fetchData = async () => {
+            try {
+
+                const responseEmployees = await axios.get('http://localhost:8080/employees')
+                setEmployees(responseEmployees.data)
+                const responseManagers = await axios.get('http://localhost:8080/employees/managers')
+                setManagers(responseManagers.data)
+
+                setFirstLoading(false)
+            } catch (error) {
+                message.error(error.toString())
+            }
+        }
+
+        fetchData()
         load(id)
+
+
     }, [id, form])
 
     const submit = async (values) => {
         setloading(true)
-        console.log(values)
-        values.release_date = "2020-09-22"
-        // values.release_date.format("yyyy-mm-dd")
+        values.release_date = DateTime.fromJSDate(values.release_date._d).toFormat('yyyy-MM-dd')
         values.leaving = values.leaving ? 'y' : 'n'
         values.propability = parseInt(values.propability)
         values.release_percentage = parseInt(values.release_percentage)
+
+        let action_taken = null
+        if (values.action_taken.other && values.action_taken.other !== '') {
+            action_taken = values.action_taken.other
+        }
+        if (values.action_taken.list && values.action_taken.list !== '') {
+            action_taken = values.action_taken.list
+        }
+        let payload = { data: values }
+        if (action_taken) {
+            payload.action = { action: action_taken }
+        }
+        console.table(values)
+        delete values.action_taken
+
         try {
-            await axios.put(`http://localhost:8080/releases/edit/${id}`, { data: values })
+            await axios.put(`http://localhost:8080/releases/edit/${id}`, payload)
             setloading(false)
             cancel()
         }
         catch (error) {
             message.error(error.toString())
             setloading(false)
+        }
+    }
+
+    const onChange = value => {
+        const employee = employees.find(em => em.name === value)
+        if (employee) {
+            form.setFieldsValue({ employee_id: employee.id, employee_title: employee.title })
+        }
+    }
+
+    const onChangeAction = value => {
+        switch (value) {
+            case 'moved':
+                form.setFieldsValue({ release_status: 'moved' })
+                break;
+            case 'left':
+                form.setFieldsValue({ release_status: 'left' })
+                break;
+            default:
+                break;
         }
     }
 
@@ -71,8 +127,56 @@ const NewRelease = (props) => {
                         onFinish={submit}
                         form={form}
                     >
+                        <Divider >Take Action</Divider>
 
-                        <Form.Item label="Leaving" name="leaving">
+
+                        <Form.Item label='Action Taken'>
+                            {/* <Input.Group compact> */}
+                            <Form.Item name={["action_taken", "list"]}>
+                                <Select
+                                    showSearch
+                                    optionFilterProp="children"
+                                    filterOption={(input, option) =>
+                                        option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                    }
+                                    allowClear
+                                    onChange={onChangeAction}
+                                >
+
+                                    <Select.Option key='moved' value="moved">Moving List</Select.Option>
+                                    <Select.Option key='left' value="left">Leaving List</Select.Option>
+
+                                </Select>
+                            </Form.Item>
+
+                            <Form.Item name={["action_taken", "other"]}>
+                                <Input placeholder='Other action ...' />
+                            </Form.Item>
+                            {/* </Input.Group> */}
+                        </Form.Item>
+
+                        <Form.Item label="Status" name="release_status">
+                            <Select
+                                showSearch
+                                optionFilterProp="children"
+                                filterOption={(input, option) =>
+                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                }
+                                allowClear
+                            >
+
+                                <Select.Option key='open' value="open">Open</Select.Option>
+                                <Select.Option key='cancelled' value="cancelled">Cancelled</Select.Option>
+                                <Select.Option key='moved' value="moved">Moved</Select.Option>
+                                <Select.Option key='left' value="left">Left</Select.Option>
+                                <Select.Option key='booked' value="booked">Booked</Select.Option>
+
+                            </Select>
+                        </Form.Item>
+
+                        <Divider />
+
+                        <Form.Item label="Leaving" name="leaving" valuePropName='checked'>
                             <Switch />
                         </Form.Item>
 
@@ -83,17 +187,24 @@ const NewRelease = (props) => {
                                 filterOption={(input, option) =>
                                     option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                 }
+                                onChange={onChange}
                                 allowClear
                             >
-
-                                <Select.Option value="Hanna Sharaf">Hanna Sharaf</Select.Option>
-                                <Select.Option value="Mona Hawash">Mona Hawash</Select.Option>
-
+                                {employees && employees.map(employee => <Select.Option key={employee.id} value={employee.name}>{employee.name}</Select.Option>)}
                             </Select>
                         </Form.Item>
 
                         <Form.Item label="Manager Name" name="manager_name">
-                            <Input />
+                            <Select
+                                showSearch
+                                optionFilterProp="children"
+                                filterOption={(input, option) =>
+                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                }
+                                allowClear
+                            >
+                                {managers && managers.map(manager => <Select.Option key={manager.id} value={manager.name}>{manager.name}</Select.Option>)}
+                            </Select>
                         </Form.Item>
 
                         <Form.Item label="Employee ID" name="employee_id">
@@ -128,24 +239,7 @@ const NewRelease = (props) => {
                             <Input addonAfter="%" />
                         </Form.Item>
 
-                        <Form.Item label="Status" name="release_status">
-                            <Select
-                                showSearch
-                                optionFilterProp="children"
-                                filterOption={(input, option) =>
-                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                }
-                                allowClear
-                            >
 
-                                <Select.Option value="open">Open</Select.Option>
-                                <Select.Option value="cancelled">Cancelled</Select.Option>
-                                <Select.Option value="moved">Moved</Select.Option>
-                                <Select.Option value="left">Left</Select.Option>
-                                <Select.Option value="booked">Booked</Select.Option>
-
-                            </Select>
-                        </Form.Item>
 
                         <Form.Item>
                             <Button key="submit" htmlType="submit" loading={loading}>
@@ -161,4 +255,4 @@ const NewRelease = (props) => {
     )
 }
 
-export default NewRelease
+export default EditRelease

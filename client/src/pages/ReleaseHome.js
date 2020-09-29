@@ -1,128 +1,21 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Tag, Button, Spin, Modal, message } from 'antd'
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Table, Spin } from 'antd'
+// import { DeleteOutlined } from '@ant-design/icons'
 import axios from 'axios'
 
 import MiniRow from '../components/MiniRow'
 import Title from '../components/Title'
 import NewRelease from '../components/NewRelease'
 import EditRelease from '../components/EditRelease'
-
-import Code from '../styles/Code'
-import colors from '../styles/colors'
+import History from '../components/History'
+import tableColumns from '../util/releaseColumns'
+import ExportButton from '../components/ExportButton'
+import Search from '../components/Search'
 
 const ReleaseHome = () => {
 
-    const columns = [
-        {
-            title: 'Reference No.',
-            dataIndex: 'reference_number',
-            key: 'reference_number',
-            render:
-                id => <Code>{id}</Code>
-        },
-        {
-            title: 'Manager',
-            dataIndex: 'manager_name',
-            key: 'manager_name',
-        },
-        {
-            title: 'Employee Name',
-            dataIndex: 'employee_name',
-            key: 'employee_name',
-        },
-        {
-            title: 'Employee ID',
-            dataIndex: 'employee_id',
-            key: 'employee_id',
-            render:
-                id => <Code>{id}</Code>
-        },
-        // {
-        //     title: 'Employee Title',
-        //     dataIndex: 'employeeTitle',
-        //     key: 'employeeTitle',
-        // },
-        {
-            title: 'Function',
-            dataIndex: 'function',
-            key: 'function',
-        },
-        {
-            title: 'Release Date',
-            dataIndex: 'release_date',
-            key: 'release_date',
-        },
-        // {
-        //     title: 'Release Reason',
-        //     dataIndex: 'releaseReason',
-        //     key: 'releaseReason',
-        // },
-        {
-            title: 'Release %',
-            dataIndex: 'release_percentage',
-            key: 'release_percentage',
-        },
-        // {
-        //     title: 'Leaving',
-        //     dataIndex: 'leaving',
-        //     key: 'leaving',
-        // },
-        {
-            title: 'Status',
-            dataIndex: 'request_status',
-            key: 'request_status',
-            render:
-                status => {
-                    switch (status) {
-                        case 'open':
-                            return <Tag color={colors.blue}>OPEN</Tag>
-                        case 'cancelled':
-                            return <Tag color={colors.red}>CANCELLED</Tag>
-                        case 'moved':
-                            return <Tag color={colors.black}>MOVED</Tag>
-                        case 'left':
-                            return <Tag color={colors.darkRed}>LEFT</Tag>
-                        case 'booked':
-                            return <Tag color={colors.black}>BOOKED</Tag>
-                        default:
-                            return <Tag color={colors.black}>{status ? status.toUpperCase() : 'NONE'}</Tag>
-                    }
-                }
-        },
-        {
-            title: 'Action Taken',
-            dataIndex: 'actionTaken',
-            key: 'actionTaken',
-            render:
-                actionTaken => {
-                    switch (actionTaken) {
-                        case 'movingList':
-                            return <Tag color={colors.blue}>MOVING LIST</Tag>
-                        case 'leavingList':
-                            return <Tag color={colors.red}>LEAVING LIST</Tag>
-                        default:
-                            return <Tag color={colors.black}>{actionTaken ? actionTaken.toUpperCase() : 'NONE'}</Tag>
-                    }
-                }
-        },
-        {
-            title: 'Actions',
-            dataIndex: 'actions',
-            key: 'actions',
-            fixed: 'right',
-            render: id => {
-                return (
-                    <>
-                        <Button size='small' onClick={() => { setselectedId(id); setEditVisible(true); }}><EditOutlined /></Button>
-                        <Button size='small' onClick={() => confirmDelete(id)}><DeleteOutlined /></Button>
-                    </>
-                )
-            }
-        }
-    ]
-
     const [data, setData] = useState(null)
+    const [filterdData, setFilterdData] = useState(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -132,6 +25,7 @@ const ReleaseHome = () => {
                 element.actions = element.reference_number
             })
             setData(requests.data)
+            setFilterdData(requests.data)
         }
 
         fetchData()
@@ -147,50 +41,40 @@ const ReleaseHome = () => {
         setEditVisible(bool)
     }
 
-    const [selectedId, setselectedId] = useState(null)
-    const [deleteLoading, setDeleteLoading] = useState(false)
-
-    const confirmDelete = async (id) => {
-        Modal.confirm({
-            title: 'Are you sure delete this Release Request?',
-            icon: <DeleteOutlined />,
-            okText: 'Yes',
-            okType: 'danger',
-            cancelText: 'No',
-            okButtonProps: { loading: deleteLoading },
-            onOk() {
-                console.log('OK')
-                setDeleteLoading(true)
-                axios.delete(`http://localhost:8080/releases/delete/${id}`)
-                    .then(() => setDeleteLoading(false))
-                    .catch((error) => message(error.toString()))
-
-                // setDeleteLoading(false)
-            },
-            onCancel() {
-                console.log('Cancel');
-            },
-        });
+    const [historyVisible, setHistoryVisible] = useState(false)
+    const toggleHistory = (bool) => {
+        setHistoryVisible(bool)
     }
+
+    const [selectedId, setselectedId] = useState(null)
+
+    const cols = tableColumns(setselectedId, setEditVisible, setHistoryVisible)
 
     return (
         <div>
             <Title title='Release Requests' onClick={() => toggleNew(true)} />
 
+            <Search data={data} filterData={setFilterdData} />
+
             <NewRelease visible={newVisible} cancel={() => toggleNew(false)} />
 
             <EditRelease visible={editVisible} cancel={() => toggleEdit(false)} id={selectedId} />
 
+            <History visible={historyVisible} cancel={() => toggleHistory(false)} id={selectedId} mode='releases' />
+
             {!data ? <Spin size="large" style={{ textAlign: 'center', width: '100%' }} /> :
                 <Table
-                    columns={columns}
-                    dataSource={data}
+                    columns={cols.columns}
+                    dataSource={filterdData}
                     expandable={{
-                        expandedRowRender: record => <MiniRow record={record} />,
+                        expandedRowRender: record => <MiniRow columns={cols.miniColoumns} dataSource={record} />,
                         rowExpandable: _ => true,
                     }}
                     scroll={{ x: 1500 }}
+                    pagination={{ defaultPageSize: 20 }}
                 />}
+
+            <ExportButton data={filterdData} mode='releases' />
         </div>
     )
 }
