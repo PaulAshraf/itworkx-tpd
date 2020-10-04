@@ -2,6 +2,7 @@ const sequelize = require('../config/db')
 const release_requests = require('../models/release_requests')(sequelize)
 const release_requests_actions = require('../models/release_requests_actions')(sequelize)
 
+const { DateTime } = require('luxon')
 
 // Returns all Release Requests with the search filters applied (and open status)
 // if filters is null, returns all Release request with status open
@@ -10,7 +11,7 @@ const getAllReleaseRequests = async (filters) => {
         const requests = await release_requests.findAll({
             where: {
                 ...filters,
-                request_status: 'open'
+                // request_status: 'open'
             },
             order: [
                 ['release_date', 'DESC']
@@ -49,6 +50,7 @@ const addReleaseRequest = async (data) => {
 
 // Updates a Release request on the TPD system
 const updateReleaseRequest = async (id, data) => {
+    console.log(data)
     try {
         const res = await release_requests.update(data,
             {

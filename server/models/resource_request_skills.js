@@ -8,8 +8,8 @@ module.exports = sequelize => {
       type: DataTypes.INTEGER(11),
       allowNull: false,
       defaultValue: null,
-      primaryKey: false,
-      autoIncrement: false,
+      primaryKey: true,
+      autoIncrement: true,
       comment: null,
       field: "skill_id",
       references: {

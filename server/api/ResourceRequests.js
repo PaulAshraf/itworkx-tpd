@@ -1,13 +1,13 @@
 const router = require('express').Router()
 const { DateTime } = require('luxon')
 
-const ReleaseRequestsService = require('../services/ReleaseRequestService')
+const ResourceRequestsService = require('../services/ResourceRequestService')
 const generateExcel = require('../services/ExcelService')
 
 router.post('/search', async (req, res) => {
     const filters = req.body.filters
     try {
-        const requests = await ReleaseRequestsService.getAllReleaseRequests(filters)
+        const requests = await ResourceRequestsService.getAllResourceRequests(filters)
         res.status(200).json(requests)
     }
     catch (error) {
@@ -18,7 +18,7 @@ router.post('/search', async (req, res) => {
 router.get('/:id', async (req, res) => {
     const id = req.params.id
     try {
-        const request = await ReleaseRequestsService.getReleaseRequest(id)
+        const request = await ResourceRequestsService.getResourceRequest(id)
         res.status(200).json(request)
     }
     catch (error) {
@@ -29,7 +29,7 @@ router.get('/:id', async (req, res) => {
 router.get('/actions_history/:id', async (req, res) => {
     const id = req.params.id
     try {
-        const request = await ReleaseRequestsService.getAllReleaseRequestActions(id)
+        const request = await ResourceRequestsService.getAllResourceRequestActions(id)
         res.status(200).json(request)
     }
     catch (error) {
@@ -41,7 +41,7 @@ router.post('/new', async (req, res) => {
     const data = req.body
 
     try {
-        const request = await ReleaseRequestsService.addReleaseRequest(data)
+        const request = await ResourceRequestsService.addResourceRequest(data)
         res.status(200).json(request)
     }
     catch (error) {
@@ -52,7 +52,7 @@ router.post('/new', async (req, res) => {
 router.delete('/delete/:id', async (req, res) => {
     const id = req.params.id
     try {
-        const request = await ReleaseRequestsService.deleteReleaseRequest(id)
+        const request = await ResourceRequestsService.deleteResourceRequest(id)
         res.status(200).json(request)
     }
     catch (error) {
@@ -61,11 +61,11 @@ router.delete('/delete/:id', async (req, res) => {
 })
 
 router.post('/excel', async (req, res) => {
-    const name = 'ReleaseRequests'
+    const name = 'ResourceRequests'
     const data = req.body.data
 
     try {
-        const workbook = generateExcel(name, data)
+        const workbook = generateExcel(name, data, 'resource')
 
         res.setHeader(
             "Content-Type",
@@ -93,14 +93,14 @@ router.put('/edit/:id', async (req, res) => {
 
 
     try {
-        const request = await ReleaseRequestsService.updateReleaseRequest(id, data)
+        const request = await ResourceRequestsService.updateResourceRequest(id, data)
         if (action) {
 
-            action.release_request_reference_number = id
+            action.resource_request_reference_number = id
             action.action_date = DateTime.local().toFormat('yyyy-MM-dd')
             action.action_owner = "Paul Ashraf" // get from auth middle ware
             console.log(action)
-            const actionResponse = await ReleaseRequestsService.updateReleaseRequestAction(action)
+            const actionResponse = await ResourceRequestsService.updateResourceRequestAction(action)
             res.status(200).json({
                 request,
                 actionResponse

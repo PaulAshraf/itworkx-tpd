@@ -7,6 +7,7 @@ import { Modal, Form, Input, Select, DatePicker, Switch, Button, message, Spin, 
 
 const EditRelease = (props) => {
 
+
     const [form] = Form.useForm();
 
     const id = props.id
@@ -64,17 +65,18 @@ const EditRelease = (props) => {
         values.release_percentage = parseInt(values.release_percentage)
 
         let action_taken = null
-        if (values.action_taken.other && values.action_taken.other !== '') {
-            action_taken = values.action_taken.other
-        }
         if (values.action_taken.list && values.action_taken.list !== '') {
             action_taken = values.action_taken.list
+        }
+        if (values.action_taken.other && values.action_taken.other !== '') {
+            action_taken = values.action_taken.other
         }
         let payload = { data: values }
         if (action_taken) {
             payload.action = { action: action_taken }
         }
-        console.table(values)
+        console.log(values)
+        console.log(payload)
         delete values.action_taken
 
         try {
@@ -91,17 +93,17 @@ const EditRelease = (props) => {
     const onChange = value => {
         const employee = employees.find(em => em.name === value)
         if (employee) {
-            form.setFieldsValue({ employee_id: employee.id, employee_title: employee.title })
+            form.setFieldsValue({ employee_id: employee.id, employee_title: employee.title, function: employee.title })
         }
     }
 
     const onChangeAction = value => {
         switch (value) {
             case 'moved':
-                form.setFieldsValue({ release_status: 'moved' })
+                form.setFieldsValue({ request_status: 'moved' })
                 break;
             case 'left':
-                form.setFieldsValue({ release_status: 'left' })
+                form.setFieldsValue({ request_status: 'left' })
                 break;
             default:
                 break;
@@ -155,7 +157,7 @@ const EditRelease = (props) => {
                             {/* </Input.Group> */}
                         </Form.Item>
 
-                        <Form.Item label="Status" name="release_status">
+                        <Form.Item label="Status" name="request_status">
                             <Select
                                 showSearch
                                 optionFilterProp="children"

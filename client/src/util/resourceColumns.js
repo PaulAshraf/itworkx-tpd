@@ -63,9 +63,9 @@ export default (setselectedId, setEditVisible, setHistoryVisible) => {
                             case 'moved':
                                 return <Tag color={colors.black}>MOVED</Tag>
                             case 'pendingHiringRequest':
-                                return <Tag color={colors.darkRed}>PENDING HIRING REQUEST</Tag>
+                                return <Tag color={colors.darkRed}>PENDING HIRING</Tag>
                             case 'pendingOutsourcingRequest':
-                                return <Tag color={colors.darkRed}>PENDING OUTSOURCING REQUEST</Tag>
+                                return <Tag color={colors.darkRed}>PENDING OUTSOURCING</Tag>
                             case 'overAllocated':
                                 return <Tag color={colors.red}>OVER ALLOCATED</Tag>
                             case 'hired':

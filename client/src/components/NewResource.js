@@ -25,12 +25,12 @@ const NewResource = (props) => {
 
     const [form] = Form.useForm()
 
-    const onChange = value => {
-        const employee = employees.find(em => em.name === value)
-        if (employee) {
-            form.setFieldsValue({ employee_id: employee.id, employee_title: employee.title, function: employee.function })
-        }
-    }
+    // const onChange = value => {
+    //     const employee = employees.find(em => em.name === value)
+    //     if (employee) {
+    //         form.setFieldsValue({ employee_id: employee.id, employee_title: employee.title, function: employee.function })
+    //     }
+    // }
 
     const formArr = (key, arr) => {
         let newArr = []
@@ -45,22 +45,25 @@ const NewResource = (props) => {
     const [loading, setloading] = useState(false)
 
     const submit = async (values) => {
-        // setloading(true)
-        console.table(values)
-        // values.resource_date = DateTime.fromJSDate(values.resource_date._d).toFormat('yyyy-MM-dd')
-        // values.leaving = values.leaving ? 'y' : 'n'
-        // values.request_status = 'open'
-        // values.propability = parseInt(values.propability)
-        // values.resource_percentage = parseInt(values.resource_percentage)
-        // try {
-        //     await axios.post('http://localhost:8080/resources/new', values)
-        //     setloading(false)
-        //     cancel()
-        // }
-        // catch (error) {
-        //     message.error(error.toString())
-        //     setloading(false)
-        // }
+        setloading(true)
+        console.log(values)
+        values.start_date = DateTime.fromJSDate(values.start_date._d).toFormat('yyyy-MM-dd')
+        values.end_date = DateTime.fromJSDate(values.end_date._d).toFormat('yyyy-MM-dd')
+        values.created_at = DateTime.local().toFormat('yyyy-MM-dd')
+        values.core_team_member = values.core_team_member ? 'y' : 'n'
+        values.replacenement = values.replacenement ? 'y' : 'n'
+        values.status = 'open'
+        values.propability = parseInt(values.propability)
+        values.percentage = parseInt(values.percentage)
+        try {
+            await axios.post('http://localhost:8080/resources/new', values)
+            setloading(false)
+            cancel()
+        }
+        catch (error) {
+            message.error(error.toString())
+            setloading(false)
+        }
     }
 
     return (
@@ -80,6 +83,7 @@ const NewResource = (props) => {
                     layout="horizontal"
                     onFinish={submit}
                     form={form}
+                    initialValues={{ requests_count: 1 }}
                 >
 
                     <Divider >Request Details</Divider>
@@ -145,7 +149,7 @@ const NewResource = (props) => {
                     </Form.Item>
 
                     <Form.Item label="Number of Requests" name="requests_count" rules={[{ required: true, message: 'Please fill in this field' }]}>
-                        <InputNumber defaultValue={1} />
+                        <InputNumber />
                     </Form.Item>
 
                     <Divider >Assignment</Divider>
@@ -178,11 +182,13 @@ const NewResource = (props) => {
                                 <div>
                                     {fields.map(field => (
                                         <Space key={field.key} style={{ display: 'flex', marginBottom: 8 }} align="start">
-                                            <Form.Item {...field} name={[field.name, 'category']} fieldKey={[field.fieldKey, 'category']} rules={[{ required: true, message: 'Missing first name' }]}>
-                                                <Input placeholder="Category" />
+
+                                            <Form.Item {...field} name={[field.name, 'category']} fieldKey={[field.fieldKey, 'category']} rules={[{ required: true, message: 'Missing Category' }]}>
+                                                <Input placeholder="Category" style={{ width: '200px' }} />
                                             </Form.Item>
-                                            <Form.Item {...field} name={[field.name, 'subCategory']} fieldKey={[field.fieldKey, 'subCategory']} rules={[{ required: true, message: 'Missing last name' }]}>
-                                                <Input placeholder="Sub Category" />
+
+                                            <Form.Item {...field} name={[field.name, 'subcategory']} fieldKey={[field.fieldKey, 'subcategory']} >
+                                                <Input placeholder="Sub Category" style={{ width: '200px' }} />
                                             </Form.Item>
 
                                             <MinusCircleOutlined onClick={() => { remove(field.name) }} />
@@ -191,7 +197,7 @@ const NewResource = (props) => {
 
                                     <Form.Item>
                                         <Button type="dashed" onClick={() => { add() }} block>
-                                            <PlusOutlined /> Add field
+                                            <PlusOutlined /> Add Skill
                                         </Button>
                                     </Form.Item>
                                 </div>

@@ -66,10 +66,10 @@ const ResourceHome = () => {
                 <Table
                     columns={cols.columns}
                     dataSource={filterdData}
-                    expandable={{
-                        expandedRowRender: record => <MiniRow columns={cols.miniColoumns} dataSource={record} />,
-                        rowExpandable: _ => true,
-                    }}
+                    // expandable={{
+                    //     expandedRowRender: record => <MiniRow columns={cols.miniColoumns} dataSource={record} />,
+                    //     rowExpandable: _ => true,
+                    // }}
                     scroll={{ x: 1500 }}
                     pagination={{ defaultPageSize: 20 }}
                 /> : <Empty />}
